@@ -131,10 +131,10 @@ static bool dReportThreadProc(dReportOut *args, dReportContext *context)
         double lpv, pv, dns;
     } tln, tl = { 0 };
     
-    if (bitTest(context->bits, DREPORTCONTEXT_BIT_POS_LIMIT)) cnt = cnt > context->limit ? context->limit : cnt;
+    size_t limit = bitTest(context->bits, DREPORTCONTEXT_BIT_POS_LIMIT) ? cnt > context->limit ? context->limit : cnt : cnt;
     if (bitTest(context->bits, DREPORTCONTEXT_BIT_POS_HEADER)) fprintf(f, "%s", head);
         
-    for (size_t i = 0, rank = 0; i < cnt; i++)
+    for (size_t i = 0, rank = 0; i < cnt && limit; i++)
     {
         size_t ind = index[i] - densityres->lpv;
         size_t test = ind / ldres->snpcnt, row = ind % ldres->snpcnt;
@@ -154,6 +154,7 @@ static bool dReportThreadProc(dReportOut *args, dReportContext *context)
             fprintf(f, form, tln.rank, tln.test, tln.chr, tln.li, tln.ci, tln.ri, tln.lp, tln.cp, tln.rp, tln.cnt, tln.lpv, tln.pv, tln.dns);
             tl = tln;
             rank++;
+            limit--;
         }
     }
 
