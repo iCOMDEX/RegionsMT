@@ -319,7 +319,7 @@ static bool mysqlFetchThreadPrologue(mysqlFetchOut *args, mysqlFetchContext *con
                                     arrayInitClear((void **) &res->tmaf, res->snpcnt, sizeof *res->tmaf)
                                     )) { errm = ERR_MEM; break; }
                                 
-                                fillNaN(res->tmaf, res->snpcnt); // All floats are set to some quite NaN
+                                MEMORY_SET(res->tmaf, res->snpcnt); // All floats are set to some quite NaN
                             }
 
                             // Convert lengths to offsets
@@ -354,8 +354,8 @@ static bool mysqlFetchThreadPrologue(mysqlFetchOut *args, mysqlFetchContext *con
                                 arrayInitClear((void **) &res->rqas, res->pvcnt, sizeof *res->rqas) &&
                                 arrayInitClear((void **) &res->rnlpv, res->pvcnt, sizeof *res->rnlpv))) { errm = ERR_MEM; break; }
                                 
-                            fillNaN(res->qas, res->pvcnt);
-                            fillNaN(res->nlpv, res->pvcnt);
+                            MEMORY_SET(res->qas, res->pvcnt);
+                            MEMORY_SET(res->nlpv, res->pvcnt);
                                 
                             // Other fields are initialized elsewhere...                            
                             break;

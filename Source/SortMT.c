@@ -86,7 +86,7 @@ sortMT *sortMTCreate(void *arr, size_t cnt, size_t sz, compareCallback comp, voi
     sortMTSync *snc = sync ? sync : &(sortMTSync) { 0 };
     
     size_t dep = sizeBitScanReverse(threadPoolGetCount(pool));
-    if (dep + 1 > (sizeof (size_t) << 3)) dep = (sizeof(size_t) << 3) - 1;
+    if (dep + 1 > (sizeof (size_t) << 3)) dep = (sizeof (size_t) << 3) - 1;
     
     const size_t scnt = SIZE_C(1) << dep, mcnt = scnt - 1;
 

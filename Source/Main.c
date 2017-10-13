@@ -6,6 +6,7 @@
 #include "DensityFold.h"
 #include "DensityFold-Report.h"
 #include "Framework.h"
+#include "Genotypes.h"
 #include "Log.h"
 #include "LoadData.h"
 #include "Memory.h"
@@ -238,11 +239,11 @@ int main(int argc, char **argv)
     struct { xmlNode *node; size_t cnt; } dscsch = CLII((xmlNode[])
     {
         {
-            STRI("Density"),
-            sizeof(densityContext),
-            (prologueCallback) densityPrologue,
-            (epilogueCallback) densityEpilogue,
-            (disposeCallback) densityContextDispose,
+            .name = STRI("Density"),
+            .sz = sizeof(densityContext),
+            .prologue = (prologueCallback) densityPrologue,
+            .epilogue = (epilogueCallback) densityEpilogue,
+            .dispose = (disposeCallback) densityContextDispose,
             CLII((struct att[])
             {
                 { STRI("pos"), 0, &(handlerContext) { offsetof(densityContext, bits), DENSITYCONTEXT_BIT_POS_POS }, (readHandlerCallback) boolHandler },
@@ -252,11 +253,11 @@ int main(int argc, char **argv)
             CLII((xmlNode[])
             {
                 {
-                    STRI("Fold"),
-                    sizeof(densityFoldContext),
-                    (prologueCallback) densityFoldPrologue,
-                    (epilogueCallback) densityFoldEpilogue,
-                    (disposeCallback) densityFoldContextDispose,
+                    .name = STRI("Fold"),
+                    .sz = sizeof(densityFoldContext),
+                    .prologue = (prologueCallback) densityFoldPrologue,
+                    .epilogue = (epilogueCallback) densityFoldEpilogue,
+                    .dispose = (disposeCallback) densityFoldContextDispose,
                     CLII((struct att[])
                     {
                         { STRI("group"), offsetof(densityFoldContext, group), NULL, (readHandlerCallback) strHandler },
@@ -265,11 +266,11 @@ int main(int argc, char **argv)
                     CLII((xmlNode[])
                     {
                         {
-                            STRI("Report"),
-                            sizeof(dfReportContext),
-                            (prologueCallback) dfReportPrologue,
-                            (epilogueCallback) dfReportEpilogue,
-                            (disposeCallback) dfReportContextDispose,
+                            .name = STRI("Report"),
+                            .sz = sizeof(dfReportContext),
+                            .prologue = (prologueCallback) dfReportPrologue,
+                            .epilogue = (epilogueCallback) dfReportEpilogue,
+                            .dispose = (disposeCallback) dfReportContextDispose,
                             CLII((struct att[])
                             {
                                 { STRI("header"), 0, &(handlerContext) { offsetof(dfReportContext, bits), DFREPORTCONTEXT_BIT_POS_HEADER }, (readHandlerCallback) boolHandler },
@@ -283,11 +284,11 @@ int main(int argc, char **argv)
                     })
                 },
                 {
-                    STRI("Regions"),
-                    sizeof(regionsContext),
-                    (prologueCallback) regionsPrologue,
-                    (epilogueCallback) regionsEpilogue,
-                    (disposeCallback) regionsContextDispose,
+                    .name = STRI("Regions"),
+                    .sz = sizeof(regionsContext),
+                    .prologue = (prologueCallback) regionsPrologue,
+                    .epilogue = (epilogueCallback) regionsEpilogue,
+                    .dispose = (disposeCallback) regionsContextDispose,
                     CLII((struct att[])
                     {
                         { STRI("decay"), offsetof(regionsContext, decay), &(handlerContext) { offsetof(regionsContext, bits) - offsetof(regionsContext, decay), REGIONSCONTEXT_BIT_POS_DECAY }, (readHandlerCallback) uint32Handler },
@@ -299,11 +300,11 @@ int main(int argc, char **argv)
                     })
                 },
                 {
-                    STRI("Report"),
-                    sizeof(dReportContext),
-                    (prologueCallback) dReportPrologue,
-                    (epilogueCallback) dReportEpilogue,
-                    (disposeCallback) dReportContextDispose,
+                    .name = STRI("Report"),
+                    .sz = sizeof(dReportContext),
+                    .prologue = (prologueCallback) dReportPrologue,
+                    .epilogue = (epilogueCallback) dReportEpilogue,
+                    .dispose = (disposeCallback) dReportContextDispose,
                     CLII((struct att[])
                     {
                         { STRI("header"), 0, &(handlerContext) { offsetof(dReportContext, bits), DREPORTCONTEXT_BIT_POS_HEADER }, (readHandlerCallback) boolHandler },
@@ -316,11 +317,11 @@ int main(int argc, char **argv)
             })
         },
         {
-            STRI("MySQL.Dispatch"),
-            sizeof(mysqlDispatchContext),
-            (prologueCallback) mysqlDispatchPrologue,
-            (epilogueCallback) mysqlDispatchEpilogue,
-            (disposeCallback) mysqlDispatchContextDispose,
+            .name = STRI("MySQL.Dispatch"),
+            .sz = sizeof(mysqlDispatchContext),
+            .prologue = (prologueCallback) mysqlDispatchPrologue,
+            .epilogue = (epilogueCallback) mysqlDispatchEpilogue,
+            .dispose = (disposeCallback) mysqlDispatchContextDispose,
             CLII((struct att[])
             {
                 { STRI("host"), offsetof(mysqlDispatchContext, host), NULL, (readHandlerCallback) strHandler },
@@ -336,11 +337,11 @@ int main(int argc, char **argv)
     // All names on every sub-level should be sorted according to 'strncmp'!!!
     xmlNode xmlsch =
     {
-        STRI("RegionsMT"),
-        sizeof(frameworkContext),
-        (prologueCallback) frameworkPrologue,
-        (epilogueCallback) frameworkEpilogue,
-        (disposeCallback) frameworkContextDispose,
+        .name = STRI("RegionsMT"),
+        .sz = sizeof(frameworkContext),
+        .prologue = (prologueCallback) frameworkPrologue,
+        .epilogue = (epilogueCallback) frameworkEpilogue,
+        .dispose = (disposeCallback) frameworkContextDispose,
         CLII((struct att[])
         {
             { STRI("log"), offsetof(frameworkContext, logFile), NULL, (readHandlerCallback) strHandler },
@@ -349,11 +350,11 @@ int main(int argc, char **argv)
         CLII((xmlNode[])
         {
             {
-                STRI("Data.Load"),
-                sizeof(loadDataContext),
-                (prologueCallback) loadDataPrologue,
-                (epilogueCallback) loadDataEpilogue,
-                (disposeCallback) loadDataContextDispose,
+                .name = STRI("Data.Load"),
+                .sz = sizeof(loadDataContext),
+                .prologue = (prologueCallback) loadDataPrologue,
+                .epilogue = (epilogueCallback) loadDataEpilogue,
+                .dispose = (disposeCallback) loadDataContextDispose,
                 CLII((struct att[])
                 {
                     { STRI("header"), 0, &(handlerContext) { offsetof(loadDataContext, bits), LOADDATACONTEXT_BIT_POS_HEADER }, (readHandlerCallback) boolHandler },
@@ -365,13 +366,29 @@ int main(int argc, char **argv)
                     { STRI("path.val"), offsetof(loadDataContext, pathval), NULL, (readHandlerCallback) strHandler },
                 }),
                 { dscsch.node, dscsch.cnt }
-            },            
+            },
             {
-                STRI("MySQL.Fetch"),
-                sizeof(mysqlFetchContext),
-                (prologueCallback) mysqlFetchPrologue,
-                (epilogueCallback) mysqlFetchEpilogue,
-                (disposeCallback) mysqlFetchContextDispose,
+                .name = STRI("Genotypes"),
+                .sz = sizeof(genotypesContext),
+                .prologue = (prologueCallback) genotypesPrologue,
+                .epilogue = (epilogueCallback) genotypesEpilogue,
+                .dispose = (disposeCallback) genotypesContextDispose,
+                CLII((struct att[])
+                {
+                    { STRI("option0"), 0, &(handlerContext) { offsetof(genotypesContext, bits), GENOTYPESCONTEXT_BIT_POS_OPTION0 }, (readHandlerCallback) boolHandler },
+                    { STRI("option1"), 0, &(handlerContext) { offsetof(genotypesContext, bits), GENOTYPESCONTEXT_BIT_POS_OPTION1 }, (readHandlerCallback) boolHandler },
+                    { STRI("option2"), 0, &(handlerContext) { offsetof(genotypesContext, bits), GENOTYPESCONTEXT_BIT_POS_OPTION2 }, (readHandlerCallback) boolHandler },
+                    { STRI("option3"), 0, &(handlerContext) { offsetof(genotypesContext, bits), GENOTYPESCONTEXT_BIT_POS_OPTION3 }, (readHandlerCallback) boolHandler },
+                    { STRI("path"), offsetof(genotypesContext, path), NULL, (readHandlerCallback) strHandler }
+                }),
+                { dscsch.node, dscsch.cnt }
+            },
+            {
+                .name = STRI("MySQL.Fetch"),
+                .sz = sizeof(mysqlFetchContext),
+                .prologue = (prologueCallback) mysqlFetchPrologue,
+                .epilogue = (epilogueCallback) mysqlFetchEpilogue,
+                .dispose = (disposeCallback) mysqlFetchContextDispose,
                 CLII((struct att[])
                 {
                     { STRI("host"), offsetof(mysqlFetchContext, host), NULL, (readHandlerCallback) strHandler },

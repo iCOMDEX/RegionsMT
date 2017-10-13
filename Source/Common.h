@@ -83,13 +83,16 @@ static_assert(sizeof (double) == sizeof (uint64_t), "The size of 'double' type s
 
 #define NaN (((union { double val; uint64_t bin; }) { .bin = UINT64_MAX }).val)
 
+// Memory bitwise set and reset operations
 // <string.h> is required
-#define fillNaN(ARR, CNT) ((void) memset((ARR), (UINT8_MAX), (CNT) * sizeof (ARR)[0]))
+#define MEMORY_SET(ARR, CNT) ((void) memset((ARR), (UINT8_MAX), (CNT) * sizeof (ARR)[0]))
+#define MEMORY_RESET(ARR, CNT) ((void) memset((ARR), 0, (CNT) * sizeof (ARR)[0]))
+#define CLEAR(X) MEMORY_RESET((X), 1)
 
 // Common value for sizes of temporary string and buffer used for formatting messages.
 // The size should be adequate to handle all format string appearing in the program. 
 // If this size is too small, some messages may become truncated, but no buffer overflows will occur.
-// Warning! 'TEMP_STR' should be an explicit number to be used with 'TOSTRING' macro.
+// Warning! 'TEMP_STR' should be an explicit number in order to be used with 'TOSTRING' macro.
 #define TEMP_STR 255
 #define TEMP_BUFF (TEMP_STR + 1)
 #define TEMP_BUFF_LARGE (TEMP_BUFF << 1)
@@ -102,3 +105,7 @@ static_assert(TEMP_BUFF > TEMP_STR, "'TEMP_BUFF' must be greater than 'TEMP_STR'
 // Common value for the size of temporary buffer used for file reading
 // Warning! Some routines make special assumption about this value!
 #define BLOCK_READ 4096
+
+// Applying expression to multiple objects
+#define APPLY(EXPR, TYPE, ...) \
+    do { for (size_t i = 0; i < countof(((TYPE[]) { __VA_ARGS__ })); i++) { EXPR((TYPE[]) { __VA_ARGS__ }[i]); } } while (0)

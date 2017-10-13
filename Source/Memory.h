@@ -14,6 +14,12 @@
 #   include <alloca.h>
 #endif
 
+#define SAFE_FREE(X) \
+    do { free(*(X)); *(X) = NULL; } while (0)
+
+#define SAFE_FREE_LIST(...) \
+    APPLY(SAFE_FREE, void **, __VA_ARGS__)
+
 inline bool arrayInit(void **parr, size_t cap, size_t sz)
 {
     size_t tot = cap;

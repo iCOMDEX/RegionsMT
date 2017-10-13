@@ -52,7 +52,7 @@ loopMT *loopMTCreate(loopMTCallback callback, size_t offset, size_t length, void
     {
         size_t temp = length / i;
 
-        res->args[taskscnt] = (loopMTArg) { .offset = offset, .length = length };
+        res->args[taskscnt] = (loopMTArg) { .offset = offset, .length = temp };
         
         res->tasks[taskscnt] = (task)
         {
@@ -73,6 +73,7 @@ loopMT *loopMTCreate(loopMTCallback callback, size_t offset, size_t length, void
         taskscnt++;
     }
 
+    res->thres = taskscnt;
     res->tasks[taskscnt++] = (task)
     {
         .callback = (taskCallback) loopMTTransition,
@@ -82,10 +83,11 @@ loopMT *loopMTCreate(loopMTCallback callback, size_t offset, size_t length, void
         .arg = res,
         .condmem = res,
         .asuccmem = snc->asuccmem,
-        .afailmem = snc->afailmem
+        .asuccarg = snc->asuccarg,
+        .afailmem = snc->afailmem,
+        .afailarg = snc->afailarg
     };
-    
-    res->thres = taskscnt;
+        
     if (!threadPoolEnqueueTasks(pool, res->tasks, taskscnt, 1)) goto ERR();
         
     return res;

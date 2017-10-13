@@ -22,6 +22,10 @@ typedef struct
 
 static size_t headSelector(char *str, size_t len, size_t *pos, headSelectorContext *context)
 {
+    (void) str;
+    (void) len;
+    (void) pos;
+    (void) context;
     return SIZE_MAX;
 }
 
@@ -122,7 +126,7 @@ struct loadDataThreadReadArgs
 };
 
 // This destructor function should be idempotent
-static void loadDataThreadReadArgsCloseIdem(loadDataThreadReadArgs *args)
+static void loadDataThreadReadArgsCloseTest(loadDataThreadReadArgs *args)
 {
     if (!args) return;
 
@@ -254,7 +258,7 @@ static bool loadDataThreadRead(loadDataThreadReadArgs *args, loadDataThreadConte
         break;
     }
     
-    loadDataThreadReadArgsCloseIdem(args);
+    loadDataThreadReadArgsCloseTest(args);
     if (f) fclose(f);
     return 0;
 }
@@ -497,7 +501,7 @@ bool loadDataThreadProcCombineChr(loadDataThreadCombineArgs *args, loadDataThrea
         memcpy(res->chrnamestr + off, args->args[i].strtbl[TEXT_CHRSTR], args->args[i].strtblcnt[TEXT_CHRSTR]);
         off += args->args[i].strtblcnt[TEXT_CHRSTR];
 
-        loadDataThreadReadArgsCloseIdem(&args->args[i]);
+        loadDataThreadReadArgsCloseTest(&args->args[i]);
     }
 
     return 1;
@@ -545,7 +549,7 @@ bool loadDataThreadProcCombineTest(loadDataThreadCombineArgs *args, loadDataThre
         memcpy(res->testnamestr + off, args->args[i].strtbl[TEXT_TESTSTR], args->args[i].strtblcnt[TEXT_TESTSTR]);
         off += args->args[i].strtblcnt[TEXT_TESTSTR];
 
-        loadDataThreadReadArgsCloseIdem(&args->args[i]);
+        loadDataThreadReadArgsCloseTest(&args->args[i]);
     }    
     
     return 1;
@@ -599,7 +603,7 @@ bool loadDataThreadProcCombineRow(loadDataThreadCombineArgs *args, loadDataThrea
         //arrayInit((void **) &res->allelenamestr, allelestrsz, sizeof *res->allelenamestr)
         )) goto ERR();
 
-    fillNaN(res->tmaf, snpcnt);
+    MEMORY_SET(res->tmaf, snpcnt);
     
     for (size_t i = 0, offsnp = 0/*, offallele = 0*/; i < args->cnt; i++)
     {
@@ -621,7 +625,7 @@ bool loadDataThreadProcCombineRow(loadDataThreadCombineArgs *args, loadDataThrea
         //memcpy(res->allelenamestr + offallele, args->args[i].strtbl[TEXT_ALLELE], args->args[i].strtblcnt[TEXT_ALLELE]);
         //offallele += args->args[i].strtblcnt[TEXT_ALLELE];
 
-        loadDataThreadReadArgsCloseIdem(&args->args[i]);
+        loadDataThreadReadArgsCloseTest(&args->args[i]);
     }
     
     // Checking for position correctness
@@ -644,10 +648,9 @@ bool loadDataThreadProcCombineRow(loadDataThreadCombineArgs *args, loadDataThrea
         arrayInitClear((void **) &res->rnlpv, lpvcnt, sizeof *res->rnlpv)
         )) goto ERR();
 
-    fillNaN(res->qas, lpvcnt);
-    fillNaN(res->nlpv, lpvcnt);
-
-    
+    MEMORY_SET(res->qas, lpvcnt);
+    MEMORY_SET(res->nlpv, lpvcnt);
+        
     return 1;
     
 ERR():
@@ -726,7 +729,7 @@ ERR():
         break;
     }
 
-    loadDataThreadReadArgsCloseIdem(supp->args);
+    loadDataThreadReadArgsCloseTest(supp->args);
     if (f) fclose(f);
      
     return 0;
@@ -957,7 +960,7 @@ static bool loadDataThreadClose(loadDataOut *args, void *context)
         {
             // First three tasks have special argument layout which should be handled properly
             if (i < LOADDATASUPP_TASKSUPP_LOAD_DISP)
-                for (size_t j = 0; j < supp->tasksupp[i].taskscnt; loadDataThreadReadArgsCloseIdem(&((loadDataThreadReadArgs *) supp->tasksupp[i].args)[j++]));
+                for (size_t j = 0; j < supp->tasksupp[i].taskscnt; loadDataThreadReadArgsCloseTest(&((loadDataThreadReadArgs *) supp->tasksupp[i].args)[j++]));
             
             free(supp->tasksupp[i].args);
         }

@@ -41,7 +41,7 @@ uintptr_t *ordersStableUnique(void *arr, size_t cnt, size_t sz, compareCallbackS
     for (size_t i = 0; i < cnt; res[i] = (uintptr_t) arr + i * sz, i++);
     quickSort(res, cnt, sizeof *res, (compareCallback) genericComp, &(transition) { .comp = comp, .context = context });
 
-    uintptr_t tmp;
+    uintptr_t tmp = 0;
     size_t ucnt = 0;
     
     if (cnt) tmp = res[0], res[ucnt++] = (tmp - (uintptr_t) arr) / sz;

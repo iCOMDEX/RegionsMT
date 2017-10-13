@@ -17,3 +17,4 @@ typedef bool (*loopMTCallback)(loopMTArg *, void *);
 typedef struct loopMT loopMT;
 
 loopMT *loopMTCreate(loopMTCallback, size_t, size_t, void *, threadPool *, loopMTSync *);
+void loopMTDispose(loopMT *);
