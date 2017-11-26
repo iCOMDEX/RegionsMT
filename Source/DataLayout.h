@@ -7,7 +7,7 @@
 
 typedef struct {
     struct {
-        // 'test' -- offsets in the 'teststr' array
+        // 'testname' -- offsets in the 'teststr' array
         size_t *testname;
         // 'testcnt' -- count of elements in the 'test' array
         size_t testcnt;
@@ -32,8 +32,8 @@ typedef struct {
         size_t chrnamestrsz;
     };
     struct {
-        // 'snpname' -- offsets in the 'snpstr' array
-        // 'genename' -- offsets in the 'genestr' array
+        // 'snpname' -- offsets in the 'snpnamestr' array
+        // 'genename' -- offsets in the 'genenamestr' array
         // 'allelename' -- offsets in the 'allelestr' array
         size_t *snpname, *genename;
 

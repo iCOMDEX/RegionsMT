@@ -32,9 +32,18 @@ typedef struct
 } genotypesThreadProcContext;
 
 typedef struct {
-    uint8_t *gen;
-    size_t gencnt;
-    // @Lisa: More genotypes-related fields should be added here...
+    uint8_t *gen; // length = (snp_cnt * ind_cnt + 3) / 4 
+    //PLINK : snp_cnt * (ind_cnt + 3) / 4
+    uint8_t *fen; // length = (ind_cnt + ceil(log2(fen_uni)) - 1) / ceil(log2(fen_uni))
+    size_t fen_uni;
+    size_t snp_cnt, ind_cnt, gen_cnt /* = snp_cnt * ind_cnt */;
+    size_t *chr_len; // length = chr_cnt
+    size_t chr_cnt;
+    uint32_t *pos; // length = snp_cnt
+    ptrdiff_t *snpname_off; // length = snp_cnt
+    char *snpname; // length = snpname_sz
+    size_t snpname_sz;
+    uint8_t *all; // length = (snp_cnt + 3) / 4
 } genotypesRes, *genotypesResPtr;
 
 typedef struct
@@ -55,7 +64,7 @@ typedef struct
 
 struct genotypesContext
 {
-    char *path;
+    char *path_bim, *path_bed, *path_fam;
     uint8_t bits[BYTE_CNT(GENOTYPESCONTEXT_BIT_CNT)];
 };
 

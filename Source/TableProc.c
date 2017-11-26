@@ -19,7 +19,7 @@ bool tblInit(void **tbl, tblsch *sch, size_t rowcnt, bool zer)
     // Initialization with zeros is required only for the sake of proper disposal
     if (zer) for (size_t i = 0; i < sch->colschcnt; tbl[sch->colsch[i++].ind] = NULL);
 
-    for (size_t i = 0; i < sch->colschcnt; i++)
+    for (size_t i = 0; i < sch->colschcnt; i++) if (sch->colsch[i].handler.read && sch->colsch[i].handler.write)
     {
         void *col = malloc(sch->colsch[i].size * rowcnt);
         if (!col) goto ERR();

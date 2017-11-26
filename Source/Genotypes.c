@@ -1,21 +1,141 @@
 #include "Common.h"
 #include "Genotypes.h"
 #include "TaskMacros.h"
+#include "TableProc.h"
+
+// Move pointer to the appropriate row/SNP position (new_index) in .bed file
+/*
+void bed_set_row(struct pio_file_t *plink_file, size_t new_index) 
+{
+    size_t offset = bed_header_data_offset(&(&plink_file->bed_file)->header) + (new_index - 1)*ceil(pio_num_samples(plink_file) / 4);
+    fseek((&plink_file->bed_file)->fp, offset, SEEK_SET);
+    (&plink_file->bed_file)->cur_row = new_index;
+}
+
+vector<vector<unsigned short>> InputPLINK::createGenotypeMatrix(int lowInd, int upInd) {
+
+    if (lowInd < 0) lowInd = 0;
+    if (upInd < 0) upInd = 0;
+
+    vector<vector<unsigned short>> result;
+    struct pio_file_t plink_file; // Opens all three files at once (.bed, .bim, .fam)
+    snp_t *snp_buffer;
+
+    if (pio_open(&plink_file, this->filename) != PIO_OK) {
+        cout << "Error here: Could not open " << this->filename << endl;
+    }
+    if (!pio_one_locus_per_row(&plink_file)) {
+        cout << "This script requires that snps are rows and samples columns." << endl;
+    }
+
+    snp_buffer = (snp_t *) malloc(pio_row_size(&plink_file));
+    vector<unsigned short> snp_row;
+
+    bed_set_row(&plink_file, lowInd); // Set the first SNP id we want to read
+
+    int num_snps = 0; // Make sure we read the right amount of SNPs
+                      // Loop reads the interval [lowInd,upInd] (numeration starts at zero!) from genotype (.bed file)
+    while (pio_next_row(&plink_file, snp_buffer) == PIO_OK && num_snps < upInd - lowInd + 1) {
+        snp_row = {};
+        for (int sample_id = 0; sample_id < pio_num_samples(&plink_file); sample_id++) {
+            snp_row.push_back((unsigned short) snp_buffer[sample_id]);
+        }
+        result.push_back(snp_row);
+        num_snps++;
+    }
+
+    free(snp_buffer);
+    pio_close(&plink_file);
+
+    return result;
+}
+
+vector<unsigned short> InputPLINK::createPhenotypeVector() {
+
+    string fam_file_name(this->filename);
+    fam_file_name += ".fam";
+
+    vector<unsigned short> result;
+
+    char delim = ' ';
+    string fam_line_word;
+    ifstream handle(fam_file_name);
+
+    string fam_line;
+    int ind;
+    while (getline(handle, fam_line))
+    {
+        stringstream ss;
+        ss.str(fam_line);
+        ind = 0;
+        while (getline(ss, fam_line_word, delim)) {
+            ind++;
+            if (ind == 6) {
+                result.push_back((unsigned short) stoi(fam_line_word));
+            }
+        }
+    }
+
+    handle.close();
+
+    return result;
+}
+*/
+
+static const tblsch statSchRow = CLII((tblcolsch[])
+{
+    { .handler = { .read = (readHandlerCallback) uint16Handler }, .ind = 0, .size = sizeof(uint16_t) }, // genotypesRes::chr_len
+    { .handler = { .read = (readHandlerCallback) strTableHandler }, .ind = 1, .size = sizeof(ptrdiff_t) }, // genotypesRes::snpname
+    { .handler = { .read = NULL } }, // dinstance in Morgans
+    { .handler = { .read = (readHandlerCallback) uint32Handler }, .ind = 2, .size = sizeof(uint32_t) }, // genotypesRes::pos
+    { .handler = { .read = NULL } }, // allele Major
+    { .handler = { .read = NULL } } // allele Minor
+});
+
+
+bool read_bim(genotypesContext *context)
+{
+    FILE *f = fopen(context->path_bim, "rb");
+    // if (!f) ...
+    
+    fseek64(f, 0, SEEK_END);
+    size_t sz = ftell64(f);
+
+    size_t row_cnt = rowCount(f, 0, sz);
+
+    void *tbl[3];
+    tblInit(&tbl, &statSchRow, row_cnt, 1);
+
+    char *str = NULL;
+    size_t strtblcnt = 0, strtblcap = 0;
+    void *cont[] = { [1] = &(strTableHandlerContext) { .strtbl = &str,.strtblcnt = &strtblcnt,.strtblcap = &strtblcap }, [4] = NULL };
+    
+    fseek64(f, 0, SEEK_SET);
+    bool res = rowRead(f, &statSchRow, tbl, cont, 0, 0, 0, NULL, '\t');
+
+    if (1);
+}
 
 static void genotypesResClose(genotypesRes *res)
 {
     free(res->gen);
 }
 
-static bool genotypesPatrialProc(loopMTArg *args, genotypesThreadProcContext *context)
+static bool genotypesThreadProc(loopMTArg *args, genotypesThreadProcContext *context)
 {
-    FILE *f = fopen(context->context->path, "rb");
+    FILE *f = fopen(context->context->path_bed, "rb");
     if (!f) goto ERR();
 
     if (!fseek64(f, args->offset, SEEK_SET) && fread(context->out->res.gen + args->offset, 1, args->length, f) == args->length)
-        logMsg(FRAMEWORK_META(context->out)->log, "INFO (%s): Thread %zu have read %zu bytes of the file %s + %zu B.\n", __FUNCTION__, threadPoolFetchThredId(FRAMEWORK_META(context->out)->pool), args->length, context->context->path, args->offset);
+    {
+        logMsg(FRAMEWORK_META(context->out)->log, "INFO (%s): Thread %zu have read %zu bytes of the file %s + %zu B.\n", __FUNCTION__, threadPoolFetchThredId(FRAMEWORK_META(context->out)->pool), args->length, context->context->path_bed, args->offset);
+    }    
     else
-        logMsg(FRAMEWORK_META(context->out)->log, "ERROR (%s): Thread %zu cannot read the file %s + %zu B!\n", __FUNCTION__, threadPoolFetchThredId(FRAMEWORK_META(context->out)->pool), context->context->path, args->offset);
+    {
+        logMsg(FRAMEWORK_META(context->out)->log, "ERROR (%s): Thread %zu cannot read the file %s + %zu B!\n", __FUNCTION__, threadPoolFetchThredId(FRAMEWORK_META(context->out)->pool), context->context->path_bed, args->offset);
+        fclose(f);
+        return 0;
+    }
 
     fclose(f);
     return 1;
@@ -36,10 +156,12 @@ static bool genotypesThreadPrologue(genotypesOut *args, genotypesContext *contex
 
     enum { STR_FN, STR_FR_EI, STR_FR_LP };
     
+    read_bim(context);
+
     char tempbuff[TEMP_BUFF] = { '\0' };
     FILE *f = NULL;
         
-    f = fopen(context->path, "rb");
+    f = fopen(context->path_bed, "rb");
     if (!f) goto ERR(File);
     
     fseek64(f, 0, SEEK_END);
@@ -56,10 +178,12 @@ static bool genotypesThreadPrologue(genotypesOut *args, genotypesContext *contex
 
     args->supp.context = (genotypesThreadProcContext) { .out = args, .context = context };
     
+    args->res.gen_cnt = sz;
+
     args->res.gen = malloc(sz);
     if (sz && !args->res.gen) goto ERR();
 
-    args->supp.lmt = loopMTCreate((loopMTCallback) genotypesPatrialProc, 0, sz, &args->supp.context, FRAMEWORK_META(args)->pool, &args->supp.sync);
+    args->supp.lmt = loopMTCreate((loopMTCallback) genotypesThreadProc, 0, sz, &args->supp.context, FRAMEWORK_META(args)->pool, &args->supp.sync);
     if (!args->supp.lmt) goto ERR(Loop);
 
     fclose(f);
@@ -74,7 +198,7 @@ static bool genotypesThreadPrologue(genotypesOut *args, genotypesContext *contex
 
     ERR(File):
         strerror_s(tempbuff, sizeof tempbuff, errno);
-        logMsg(FRAMEWORK_META(args)->log, strings[STR_FR_EI], strings[STR_FN], context->path, tempbuff);
+        logMsg(FRAMEWORK_META(args)->log, strings[STR_FR_EI], strings[STR_FN], context->path_bed, tempbuff);
         break;
 
     ERR(Loop):
@@ -90,7 +214,9 @@ void genotypesContextDispose(genotypesContext *context)
 {
     if (!context) return;
 
-    free(context->path);
+    free(context->path_bim);
+    free(context->path_fam);
+    free(context->path_bed);
     free(context);
 }
 
