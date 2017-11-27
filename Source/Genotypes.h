@@ -32,18 +32,18 @@ typedef struct
 } genotypesThreadProcContext;
 
 typedef struct {
-    uint8_t *gen; // length = (snp_cnt * ind_cnt + 3) / 4 
+    uint8_t *gen /* .bed */; // length = (snp_cnt * ind_cnt + 3) / 4 
     //PLINK : snp_cnt * (ind_cnt + 3) / 4
-    uint8_t *fen; // length = (ind_cnt + ceil(log2(fen_uni)) - 1) / ceil(log2(fen_uni))
-    size_t fen_uni;
-    size_t snp_cnt, ind_cnt, gen_cnt /* = snp_cnt * ind_cnt */;
-    size_t *chr_len; // length = chr_cnt
-    size_t chr_cnt;
-    uint32_t *pos; // length = snp_cnt
-    ptrdiff_t *snpname_off; // length = snp_cnt
-    char *snpname; // length = snpname_sz
-    size_t snpname_sz;
-    uint8_t *all; // length = (snp_cnt + 3) / 4
+    uint8_t *phn /* .fam */; // length = (ind_cnt + ceil(log2(fen_uni)) - 1) / ceil(log2(fen_uni))
+    size_t phn_uni /* .fam */;
+    size_t snp_cnt /* + .bim */, ind_cnt /* .fam */, gen_cnt /* = snp_cnt * ind_cnt */;
+    size_t *chr_len /* + .bim */; // length = chr_cnt
+    size_t chr_cnt /* + .bim */;
+    uint32_t *pos /* + .bim */; // length = snp_cnt
+    ptrdiff_t *snpname_off /* + .bim */; // length = snp_cnt
+    char *snpname /* + .bim */; // length = snpname_sz
+    size_t snpname_sz /* + .bim */;
+    uint8_t *all /* ? .bim */; // length = (snp_cnt + 3) / 4
 } genotypesRes, *genotypesResPtr;
 
 typedef struct

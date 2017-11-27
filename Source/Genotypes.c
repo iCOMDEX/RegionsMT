@@ -2,6 +2,7 @@
 #include "Genotypes.h"
 #include "TaskMacros.h"
 #include "TableProc.h"
+#include "Sort.h"
 
 // Move pointer to the appropriate row/SNP position (new_index) in .bed file
 /*
@@ -82,9 +83,34 @@ vector<unsigned short> InputPLINK::createPhenotypeVector() {
 }
 */
 
-static const tblsch statSchRow = CLII((tblcolsch[])
+enum chr {
+    CHR_UNDEFINED = 0,
+    CHR_X = 23,
+    CHR_Y = 24
+};
+
+
+bool chrHandler(const char *str, size_t len, uint16_t *ptr, handlerContext *context)
 {
-    { .handler = { .read = (readHandlerCallback) uint16Handler }, .ind = 0, .size = sizeof(uint16_t) }, // genotypesRes::chr_len
+    (void) len;
+
+    char *test;
+    *ptr = (uint16_t) strtoul(str, &test, 10);
+    
+    if (*test)
+    {
+        if (!strcmpci(str, "X")) *ptr = 23;
+        else if (!strcmpci(str, "Y")) *ptr = 24;
+        else return 0;
+    }    
+
+    if (context) bitSet((unsigned char *) ptr + context->set, context->pos);
+    return 1;
+}
+
+static const tblsch statSchBim = CLII((tblcolsch[])
+{
+    { .handler = { .read = (readHandlerCallback) chrHandler }, .ind = 0, .size = sizeof(uint16_t) }, // genotypesRes::chr_len
     { .handler = { .read = (readHandlerCallback) strTableHandler }, .ind = 1, .size = sizeof(ptrdiff_t) }, // genotypesRes::snpname
     { .handler = { .read = NULL } }, // dinstance in Morgans
     { .handler = { .read = (readHandlerCallback) uint32Handler }, .ind = 2, .size = sizeof(uint32_t) }, // genotypesRes::pos
@@ -93,7 +119,7 @@ static const tblsch statSchRow = CLII((tblcolsch[])
 });
 
 
-bool read_bim(genotypesContext *context)
+bool read_bim(genotypesRes *res, genotypesContext *context)
 {
     FILE *f = fopen(context->path_bim, "rb");
     // if (!f) ...
@@ -104,16 +130,83 @@ bool read_bim(genotypesContext *context)
     size_t row_cnt = rowCount(f, 0, sz);
 
     void *tbl[3];
-    tblInit(&tbl, &statSchRow, row_cnt, 1);
+    tblInit(&tbl, &statSchBim, row_cnt, 1);
 
     char *str = NULL;
     size_t strtblcnt = 0, strtblcap = 0;
-    void *cont[] = { [1] = &(strTableHandlerContext) { .strtbl = &str,.strtblcnt = &strtblcnt,.strtblcap = &strtblcap }, [4] = NULL };
+    void *cont[] = { [1] = &(strTableHandlerContext) { .strtbl = &str, .strtblcnt = &strtblcnt, .strtblcap = &strtblcap }, [4] = NULL };
     
     fseek64(f, 0, SEEK_SET);
-    bool res = rowRead(f, &statSchRow, tbl, cont, 0, 0, 0, NULL, '\t');
+    rowRead(f, &statSchBim, tbl, cont, 0, 0, 0, NULL, '\t');
 
-    if (1);
+    uint8_t chr_bits[BYTE_CNT(25)] = { 0 };
+    for (size_t i = 0; i < row_cnt; i++)
+    {
+        uint16_t ind = ((uint16_t *) (tbl[0]))[i];
+        if (ind < 25) bitSet(chr_bits, ind);
+    }
+
+    size_t chr_cnt = 25;
+    for (size_t i = 25; i; i--) if (!bitTest(chr_bits, i - 1)) chr_cnt--;
+    
+    res->snp_cnt = row_cnt;
+    res->chr_cnt = chr_cnt;
+    res->chr_len = calloc(chr_cnt, sizeof(*res->chr_len));
+    
+    for (size_t i = 0; i < row_cnt; i++)
+    {
+        uint16_t ind = ((uint16_t *) (tbl[0]))[i];
+        if (ind < chr_cnt) res->chr_len[ind]++;
+    }
+
+    res->pos = tbl[2];
+    res->snpname_off = tbl[1];
+    res->snpname = str;
+    res->snpname_sz = strtblcnt;
+    
+    fclose(f);
+    return 1;
+}
+
+static const tblsch statSchFam = CLII((tblcolsch[])
+{
+    { .handler = { .read = NULL } },
+    { .handler = { .read = NULL } },
+    { .handler = { .read = NULL } },
+    { .handler = { .read = NULL } },
+    { .handler = { .read = NULL } },
+    { .handler = { .read = uint16Handler }, .ind = 0, .size = sizeof(uint16_t) } // phenotype
+});
+
+int8_t uint16Comp(const uint16_t *a, const uint16_t *b, void *context)
+{
+    (void) context;
+    return (int8_t) ((int32_t) *a - (int32_t) *b);
+}
+
+bool read_fam(genotypesRes *res, genotypesContext *context)
+{
+    FILE *f = fopen(context->path_fam, "rb");
+    // if (!f) ...
+    
+    fseek64(f, 0, SEEK_END);
+    size_t sz = ftell64(f);
+
+    size_t row_cnt = rowCount(f, 0, sz);
+
+    void *tbl[1];
+    tblInit(&tbl, &statSchFam, row_cnt, 1);
+
+    void *cont[6] = { 0 };
+
+    fseek64(f, 0, SEEK_SET);
+    bool r = rowRead(f, &statSchFam, tbl, cont, 0, 0, 0, NULL, ' ');
+    
+    res->ind_cnt = row_cnt;
+    uintptr_t *ord = ordersStableUnique(tbl[0], row_cnt, sizeof(uint16_t), uint16Comp, NULL, &res->phn_uni);
+    
+
+    return 1;
 }
 
 static void genotypesResClose(genotypesRes *res)
@@ -156,7 +249,8 @@ static bool genotypesThreadPrologue(genotypesOut *args, genotypesContext *contex
 
     enum { STR_FN, STR_FR_EI, STR_FR_LP };
     
-    read_bim(context);
+    read_bim(&args->res, context);
+    read_fam(&args->res, context);
 
     char tempbuff[TEMP_BUFF] = { '\0' };
     FILE *f = NULL;
