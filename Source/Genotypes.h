@@ -32,18 +32,31 @@ typedef struct
 } genotypesThreadProcContext;
 
 typedef struct {
-    uint8_t *gen /* .bed */; // length = (snp_cnt * ind_cnt + 3) / 4 
-    //PLINK : snp_cnt * (ind_cnt + 3) / 4
-    uint8_t *phn /* .fam */; // length = (ind_cnt + ceil(log2(fen_uni)) - 1) / ceil(log2(fen_uni))
-    size_t phn_uni /* .fam */;
-    size_t snp_cnt /* + .bim */, ind_cnt /* .fam */, gen_cnt /* = snp_cnt * ind_cnt */;
-    size_t *chr_len /* + .bim */; // length = chr_cnt
-    size_t chr_cnt /* + .bim */;
-    uint32_t *pos /* + .bim */; // length = snp_cnt
-    ptrdiff_t *snpname_off /* + .bim */; // length = snp_cnt
-    char *snpname /* + .bim */; // length = snpname_sz
-    size_t snpname_sz /* + .bim */;
-    uint8_t *all /* ? .bim */; // length = (snp_cnt + 3) / 4
+    struct {
+        ptrdiff_t phn_off; /* .fam */
+        char *phn_name; /* .fam */
+        size_t phn_name_sz; /* .fam */
+        size_t phn_cnt; /* .fam */
+    };
+    struct {
+        //ptrdiff_t chr_off; /* .fam */
+        //char *chr_name; /* .bim */
+        //size_t chr_name_sz; /* .bim */        
+        size_t *chr_len; /* + .bim */ // length = chr_cnt
+        size_t chr_cnt; /* + .bim */
+    };
+    struct {
+        size_t *pos; /* + .bim */ // length = snp_cnt
+        ptrdiff_t *snp_name_off; /* + .bim */ // length = snp_cnt
+        char *snp_name; /* + .bim */ // length = snpname_sz
+        size_t snp_name_sz; /* + .bim */
+        uint8_t *all; /* ? .bim */ // length = (snp_cnt + 3) / 4
+        size_t snp_cnt; /* + .bim */
+    };
+    struct {
+        uint8_t *gen; /* .bed */ // length = (snp_cnt * ind_cnt + 3) / 4 
+        size_t gen_cnt /* = snp_cnt * ind_cnt */;
+    };
 } genotypesRes, *genotypesResPtr;
 
 typedef struct
