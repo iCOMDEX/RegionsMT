@@ -383,7 +383,25 @@ int main(int argc, char **argv)
                     { STRI("path.bim"), offsetof(genotypesContext, path_bim), NULL, (readHandlerCallback) strHandler },
                     { STRI("path.fam"), offsetof(genotypesContext, path_fam), NULL, (readHandlerCallback) strHandler }
                 }),
-                { dscsch.node, dscsch.cnt }
+                CLII((xmlNode[])
+                {
+                    {// start
+                        .name = STRI("ChiSq"),
+                        .sz = sizeof(adjustPValueContext),
+                        .prologue = (prologueCallback) adjustPValuePrologue,
+                        .epilogue = (epilogueCallback) adjustPValueEpilogue,
+                        .dispose = (disposeCallback) adjustPValueContextDispose,
+                        CLII((struct att[])
+                        {
+                            { STRI("filename"), offsetof(adjustPValueContext, filename), NULL, (readHandlerCallback) strHandler },
+                            { STRI("isAdaptive"), 0, &(handlerContext) { offsetof(adjustPValueContext, bits), ADJUSTPVALUECONTEXT_BIT_POS_ISADAPTIVE }, (readHandlerCallback) boolHandler },
+                            { STRI("k"), offsetof(adjustPValueContext, k), &(handlerContext) { offsetof(adjustPValueContext, bits) - offsetof(adjustPValueContext, k), ADJUSTPVALUECONTEXT_BIT_POS_K }, (readHandlerCallback) sizeHandler },
+                            { STRI("maxReplications"), offsetof(adjustPValueContext, maxReplications), &(handlerContext) { offsetof(adjustPValueContext, bits) - offsetof(adjustPValueContext, maxReplications), ADJUSTPVALUECONTEXT_BIT_POS_MAXREPLICATIONS }, (readHandlerCallback) sizeHandler },
+                            { STRI("topHitsNum"), offsetof(adjustPValueContext, topHitsNum), &(handlerContext) { offsetof(adjustPValueContext, bits) - offsetof(adjustPValueContext, topHitsNum), ADJUSTPVALUECONTEXT_BIT_POS_TOPHITSNUM }, (readHandlerCallback) sizeHandler }
+                                //{ STRI("path"), offsetof(genotypesContext, path), NULL, (readHandlerCallback) strHandler }
+                        }),
+                    },
+                }
             },
             {
                 .name = STRI("MySQL.Fetch"),

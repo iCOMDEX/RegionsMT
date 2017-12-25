@@ -33,7 +33,7 @@ typedef struct
 
 typedef struct {
     struct {
-        ptrdiff_t phn_off; /* .fam */
+        ptrdiff_t *phn_off; /* .fam */
         char *phn_name; /* .fam */
         size_t phn_name_sz; /* .fam */
         size_t phn_cnt; /* .fam */

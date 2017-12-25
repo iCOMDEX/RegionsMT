@@ -130,14 +130,14 @@ bool read_bim(genotypesRes *res, genotypesContext *context)
     size_t row_cnt = rowCount(f, 0, sz);
 
     void *tbl[3];
-    tblInit(&tbl, &statSchBim, row_cnt, 1);
+    tblInit((void **) &tbl, (tblsch *) &statSchBim, row_cnt, 1);
 
     char *str = NULL;
     size_t strtblcnt = 0, strtblcap = 0;
     void *cont[] = { [1] = &(strTableHandlerContext) { .strtbl = &str, .strtblcnt = &strtblcnt, .strtblcap = &strtblcap }, [4] = NULL };
     
     fseek64(f, 0, SEEK_SET);
-    rowRead(f, &statSchBim, tbl, cont, 0, 0, 0, NULL, '\t');
+    rowRead(f, (tblsch *) &statSchBim, tbl, cont, 0, 0, 0, NULL, '\t');
 
     uint8_t chr_bits[BYTE_CNT(25)] = { 0 };
     for (size_t i = 0; i < row_cnt; i++)
@@ -196,14 +196,14 @@ bool read_fam(genotypesRes *res, genotypesContext *context)
     size_t row_cnt = rowCount(f, 0, sz);
 
     void *tbl[1];
-    tblInit(&tbl, &statSchFam, row_cnt, 1);
+    tblInit((void **) &tbl, (tblsch *) &statSchFam, row_cnt, 1);
 
     char *str = NULL;
     size_t strtblcnt = 0, strtblcap = 0;
     void *cont[6] = { [0] = &(strTableHandlerContext) { .strtbl = &str, .strtblcnt = &strtblcnt, .strtblcap = &strtblcap } };
 
     fseek64(f, 0, SEEK_SET);
-    bool r = rowRead(f, &statSchFam, tbl, cont, 0, 0, 0, NULL, ' ');
+    bool r = rowRead(f, (tblsch *) &statSchFam, tbl, cont, 0, 0, 0, NULL, ' ');
     
     res->phn_off = tbl[0];
     res->phn_cnt = row_cnt;
@@ -298,6 +298,7 @@ static bool genotypesThreadPrologue(genotypesOut *args, genotypesContext *contex
     read_fam(&args->res, context);
     read_bed(&args->res, context);
 
+    /*
     char tempbuff[TEMP_BUFF] = { '\0' };
     FILE *f = NULL;
         
@@ -327,7 +328,7 @@ static bool genotypesThreadPrologue(genotypesOut *args, genotypesContext *contex
     if (!args->supp.lmt) goto ERR(Loop);
 
     fclose(f);
-
+    */
     for (;;)
     {
         return 1;
@@ -337,8 +338,8 @@ static bool genotypesThreadPrologue(genotypesOut *args, genotypesContext *contex
         break;
 
     ERR(File):
-        strerror_s(tempbuff, sizeof tempbuff, errno);
-        logMsg(FRAMEWORK_META(args)->log, strings[STR_FR_EI], strings[STR_FN], context->path_bed, tempbuff);
+        //strerror_s(tempbuff, sizeof tempbuff, errno);
+        //logMsg(FRAMEWORK_META(args)->log, strings[STR_FR_EI], strings[STR_FN], context->path_bed, tempbuff);
         break;
 
     ERR(Loop):
@@ -346,7 +347,7 @@ static bool genotypesThreadPrologue(genotypesOut *args, genotypesContext *contex
         break;
     }
 
-    if (f) fclose(f);
+    //if (f) fclose(f);
     return 0;    
 }
 
